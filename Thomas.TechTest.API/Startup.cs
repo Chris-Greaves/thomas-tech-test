@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Prometheus;
+using Thomas.TechTest.Data;
 
 namespace Thomas.TechTest.API
 {
@@ -25,6 +27,7 @@ namespace Thomas.TechTest.API
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Thomas.TechTest.API", Version = "v1" });
             });
+            services.AddDbContext<CandidateDbContext>(opts => opts.UseSqlite("Data Source = candidate.db"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
