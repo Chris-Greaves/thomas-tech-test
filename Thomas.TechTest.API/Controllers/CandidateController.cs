@@ -14,39 +14,18 @@ namespace Thomas.TechTest.API.Controllers
     public class CandidateController : ControllerBase
     {
         private readonly ILogger<CandidateController> _logger;
-        private readonly CandidateDbContext _context;
+        private readonly ICandidateRepository _repo;
 
-        public CandidateController(ILogger<CandidateController> logger, CandidateDbContext context)
+        public CandidateController(ILogger<CandidateController> logger, ICandidateRepository repo)
         {
             _logger = logger;
-            _context = context;
+            _repo = repo;
         }
 
         [HttpGet]
         public IEnumerable<Candidate> Get()
         {
-            return _context.Candidates.Select(c => new Candidate
-            {
-                Id = c.Id,
-                Firstname = c.Firstname,
-                Surname = c.Surname,
-                Assessments = new[]{ new AssessmentGroup
-                    {
-                        Behaviour = ConvertDbToModel(c.Assessments.SingleOrDefault(a => a.AssessmentType == AssessmentType.Behaviour && a.AssignedCandidateId == c.Id)),
-                        Aptitude = ConvertDbToModel(c.Assessments.SingleOrDefault(a => a.AssessmentType == AssessmentType.Aptitude && a.AssignedCandidateId == c.Id))
-                    }
-                }
-            });
-        }
-
-        private static Assessment ConvertDbToModel(Data.Assessment assessment)
-        {
-            return new Assessment
-            {
-                SentOn = assessment.SentOn,
-                CompletedOn = assessment.CompletedOn,
-                TrainabilityIndex = assessment.TrainabilityIndex
-            };
+            return _repo.GetCandidates();
         }
     }
 }

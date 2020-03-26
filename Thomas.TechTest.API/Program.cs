@@ -1,15 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Thomas.TechTest.Data;
 
 namespace Thomas.TechTest.API
@@ -34,31 +28,29 @@ namespace Thomas.TechTest.API
             jsonOptions.Converters.Add(new DateTimeConverter());
             var testData = JsonSerializer.Deserialize<Models.Candidate[]>(jsonString, jsonOptions);
 
-            foreach (var testCandidate in testData)
+            for (int i = 0; i < testData.Length; i++)
             {
                 context.Candidates.Add(new Candidate
                 {
-                    Id = testCandidate.Id,
-                    Firstname = testCandidate.Firstname,
-                    Surname = testCandidate.Surname,
-                    Assessments = new []
+                    Id = testData[i].Id,
+                    RoleId = testData[i].RoleId,
+                    Firstname = testData[i].Firstname,
+                    Lastname = testData[i].Lastname,
+                    BehaviourAssessmentId = i + 1,
+                    BehaviourAssessment = new BehaviourAssessment
                     {
-                        new Assessment
-                        {
-                            AssessmentType = AssessmentType.Aptitude,
-                            AssignedCandidateId = testCandidate.Id,
-                            SentOn = testCandidate.Assessments[0].Aptitude.SentOn,
-                            CompletedOn = testCandidate.Assessments[0].Aptitude.CompletedOn,
-                            TrainabilityIndex = testCandidate.Assessments[0].Aptitude.TrainabilityIndex
-                        },
-                        new Assessment
-                        {
-                            AssessmentType = AssessmentType.Behaviour,
-                            AssignedCandidateId = testCandidate.Id,
-                            SentOn = testCandidate.Assessments[0].Behaviour.SentOn,
-                            CompletedOn = testCandidate.Assessments[0].Behaviour.CompletedOn,
-                            TrainabilityIndex = testCandidate.Assessments[0].Behaviour.TrainabilityIndex
-                        },
+                        Id = i + 1,
+                        SentOn = testData[i].BehaviourAssessment.SentOn,
+                        CompletedOn = testData[i].BehaviourAssessment.CompletedOn,
+                        WorkingStrengths = testData[i].BehaviourAssessment.WorkingStrengths
+                    },
+                    AptitudeAssessmentId = i + 1,
+                    AptitudeAssessment = new AptitudeAssessment
+                    {
+                        Id = i + 1,
+                        SentOn = testData[i].BehaviourAssessment.SentOn,
+                        CompletedOn = testData[i].AptitudeAssessment.CompletedOn,
+                        TrainabilityIndex = testData[i].AptitudeAssessment.TrainabilityIndex
                     }
                 });
             }
@@ -76,7 +68,7 @@ namespace Thomas.TechTest.API
     {
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return DateTime.ParseExact(reader.GetString(),"dd/MM/yyyy", null);
+            return DateTime.ParseExact(reader.GetString(), "dd/MM/yyyy", null);
         }
 
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)

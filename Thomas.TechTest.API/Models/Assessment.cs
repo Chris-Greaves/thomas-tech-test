@@ -6,6 +6,5 @@ namespace Thomas.TechTest.API.Models
     {
         public DateTime SentOn { get; set; }
         public DateTime? CompletedOn { get; set; }
-        public int? TrainabilityIndex { get; set; }
     }
 }

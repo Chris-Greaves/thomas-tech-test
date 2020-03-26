@@ -28,6 +28,7 @@ namespace Thomas.TechTest.API
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Thomas.TechTest.API", Version = "v1" });
             });
             services.AddDbContext<CandidateDbContext>(opts => opts.UseSqlite("Data Source = candidate.db"));
+            services.AddTransient<ICandidateRepository, CandidateRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
