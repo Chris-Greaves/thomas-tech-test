@@ -1,16 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using Thomas.TechTest.Data;
 using Candidate = Thomas.TechTest.API.Models.Candidate;
-using Assessment = Thomas.TechTest.API.Models.Assessment;
-using Thomas.TechTest.API.Models;
 
 namespace Thomas.TechTest.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class CandidateController : ControllerBase
     {
         private readonly ILogger<CandidateController> _logger;
@@ -23,9 +20,23 @@ namespace Thomas.TechTest.API.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<Candidate> Get()
+        [Route("{id}")]
+        [ProducesResponseType(typeof(NotFoundResult), 404)]
+        [ProducesResponseType(typeof(ActionResult<Candidate>), 200)]
+        public ActionResult<Candidate> GetCandidate(Guid id)
         {
-            return _repo.GetCandidates();
+            var candidate = _repo.GetCandidate(id);
+            if (candidate == null)
+            {
+                return NotFound();
+            }
+            return Ok(candidate);
+        }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<Candidate>> Get()
+        {
+            return Ok(_repo.GetCandidates());
         }
     }
 }
