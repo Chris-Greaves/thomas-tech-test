@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using Thomas.TechTest.API.Models;
 using Candidate = Thomas.TechTest.API.Models.Candidate;
 
 namespace Thomas.TechTest.API.Controllers
@@ -35,11 +36,18 @@ namespace Thomas.TechTest.API.Controllers
 
         [HttpGet]
         [Route("/all/uncompleted")]
-        [ProducesResponseType(typeof(NotFoundResult), 404)]
         [ProducesResponseType(typeof(ActionResult<Candidate>), 200)]
         public ActionResult<IEnumerable<Candidate>> GetCandidatesWithOutstandingAssessments()
         {
             return Ok(_repo.GetCandidatesWithOutstandingAssessments());
+        }
+
+        [HttpPost]
+        [Route("/search")]
+        [ProducesResponseType(typeof(ActionResult<IEnumerable<CandidateSummary>>), 200)]
+        public ActionResult<IEnumerable<CandidateSummary>> GetCandidatesWithFilterOptions(SearchFilterOptions options)
+        {
+            return Ok(_repo.SearchForCandidates(options));
         }
 
         [HttpGet]

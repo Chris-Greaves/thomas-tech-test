@@ -8,5 +8,6 @@ namespace Thomas.TechTest.API
         IEnumerable<Models.Candidate> GetCandidates();
         IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments();
         Models.Candidate GetCandidate(Guid id);
+        IEnumerable<Models.CandidateSummary> SearchForCandidates(Models.SearchFilterOptions options);
     }
 }

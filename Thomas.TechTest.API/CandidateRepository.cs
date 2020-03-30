@@ -1,10 +1,8 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Thomas.TechTest.Data;
-using Thomas.TechTest.API;
-using Microsoft.EntityFrameworkCore;
 
 namespace Thomas.TechTest.API
 {
@@ -38,6 +36,53 @@ namespace Thomas.TechTest.API
                 .Select(ConvertToModel);
         }
 
+        public IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments()
+        {
+            return _context.Candidates
+                .Include(c => c.AptitudeAssessment)
+                .Include(c => c.BehaviourAssessment)
+                .Where(c => c.BehaviourAssessment.CompletedOn == null || c.AptitudeAssessment.CompletedOn == null)
+                .Select(ConvertToModel);
+        }
+
+        // Keeping for reference in case needed for future search funtionality
+        //public IEnumerable<Models.CandidateSummary> SearchForCandidates(Models.SearchFilterOptions options)
+        //{
+        //    var expression = Expression.Parameter(typeof(Candidate));
+        //    var searchStringConstant = Expression.Constant(options.NameSearchString);
+
+        //    // Firstname Search Expression
+        //    var firstnameExProp = Expression.Property(expression, "Firstname");
+        //    var firstnameEx = Expression.Call(firstnameExProp, "Contains", null, searchStringConstant);
+
+        //    // Lastname Search Expression
+        //    var lastnameExProp = Expression.Property(expression, "Lastname");
+        //    var lastnameEx = Expression.Call(lastnameExProp, "Contains", null, searchStringConstant);
+
+        //    var or = Expression.OrElse(firstnameEx, lastnameEx);
+
+        //    var lambda = Expression.Lambda<Func<Candidate, bool>>(or, expression);
+
+        //    return _context.Candidates
+        //        .Where(lambda)
+        //        .Select(ConvertToModelSummary);
+        //}
+
+        public IEnumerable<Models.CandidateSummary> SearchForCandidates(Models.SearchFilterOptions options)
+        {
+            var candidates = _context.Candidates.AsQueryable();
+
+            if (!string.IsNullOrEmpty(options.NameSearchString))
+            {
+                candidates = candidates.Where(
+                    c => c.Firstname.ToLower().Contains(options.NameSearchString.ToLower()) || 
+                    c.Lastname.ToLower().Contains(options.NameSearchString.ToLower()));
+            }
+
+            return candidates.Select(ConvertToModelSummary);
+        }
+
+
         private static Models.Candidate ConvertToModel(Data.Candidate c)
         {
             return new Models.Candidate
@@ -51,8 +96,24 @@ namespace Thomas.TechTest.API
             };
         }
 
+        private static Models.CandidateSummary ConvertToModelSummary(Data.Candidate c)
+        {
+            return new Models.CandidateSummary
+            {
+                Id = c.Id,
+                RoleId = c.RoleId,
+                Firstname = c.Firstname,
+                Lastname = c.Lastname,
+            };
+        }
+
         private static Models.AptitudeAssessment ConvertToModel(Data.AptitudeAssessment ass)
         {
+            if (ass == null)
+            {
+                return null;
+            }
+
             return new Models.AptitudeAssessment
             {
                 SentOn = ass.SentOn,
@@ -63,21 +124,17 @@ namespace Thomas.TechTest.API
 
         private static Models.BehaviourAssessment ConvertToModel(Data.BehaviourAssessment ass)
         {
+            if (ass == null)
+            {
+                return null;
+            }
+
             return new Models.BehaviourAssessment
             {
                 SentOn = ass.SentOn,
                 CompletedOn = ass.CompletedOn,
                 WorkingStrengths = ass.WorkingStrengths
             };
-        }
-
-        public IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments()
-        {
-            return _context.Candidates
-                .Include(c => c.AptitudeAssessment)
-                .Include(c => c.BehaviourAssessment)
-                .Where(c => c.BehaviourAssessment.CompletedOn == null || c.AptitudeAssessment.CompletedOn == null)
-                .Select(ConvertToModel);
         }
     }
 }
