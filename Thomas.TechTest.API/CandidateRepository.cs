@@ -38,7 +38,7 @@ namespace Thomas.TechTest.API
                 .Select(ConvertToModel);
         }
 
-        private static Models.Candidate ConvertToModel(Candidate c)
+        private static Models.Candidate ConvertToModel(Data.Candidate c)
         {
             return new Models.Candidate
             {
@@ -51,7 +51,7 @@ namespace Thomas.TechTest.API
             };
         }
 
-        private static Models.AptitudeAssessment ConvertToModel(AptitudeAssessment ass)
+        private static Models.AptitudeAssessment ConvertToModel(Data.AptitudeAssessment ass)
         {
             return new Models.AptitudeAssessment
             {
@@ -69,6 +69,15 @@ namespace Thomas.TechTest.API
                 CompletedOn = ass.CompletedOn,
                 WorkingStrengths = ass.WorkingStrengths
             };
+        }
+
+        public IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments()
+        {
+            return _context.Candidates
+                .Include(c => c.AptitudeAssessment)
+                .Include(c => c.BehaviourAssessment)
+                .Where(c => c.BehaviourAssessment.CompletedOn == null || c.AptitudeAssessment.CompletedOn == null)
+                .Select(ConvertToModel);
         }
     }
 }

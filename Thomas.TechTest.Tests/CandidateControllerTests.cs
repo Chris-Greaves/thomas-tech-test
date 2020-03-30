@@ -86,6 +86,66 @@ namespace Thomas.TechTest.Tests
             _repo.Verify(r => r.GetCandidate(candidateId), Times.Once);
         }
 
+        [TestMethod]
+        public void CanRetrieveJustTheCandidatesThatHaveOutstandingAssessments()
+        {
+            var candidates = CreateCandidates();
+            candidates.Add(new Candidate
+            {
+                Id = new Guid("495c0cbb-91e6-4e9a-bab3-80661c07199f"),
+                RoleId = Guid.NewGuid(),
+                Firstname = "Late",
+                Lastname = "Finisher1",
+                AptitudeAssessment = new AptitudeAssessment
+                {
+                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(3)),
+                },
+                BehaviourAssessment = new BehaviourAssessment
+                {
+                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(4)),
+                    WorkingStrengths = "WS"
+                }
+            });
+            candidates.Add(new Candidate
+            {
+                Id = new Guid("777e0f68-d90c-46e7-a473-57c2233ee99e"),
+                RoleId = Guid.NewGuid(),
+                Firstname = "Late",
+                Lastname = "Finisher2",
+                AptitudeAssessment = new AptitudeAssessment
+                {
+                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(3)),
+                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                    TrainabilityIndex = 24
+                },
+                BehaviourAssessment = new BehaviourAssessment
+                {
+                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                }
+            });
+            _repo.Setup(r => r.GetCandidatesWithOutstandingAssessments()).Returns(candidates.Where(c => c.AptitudeAssessment.CompletedOn == null || c.BehaviourAssessment.CompletedOn == null));
+
+            var result = _controller.GetCandidatesWithOutstandingAssessments();
+            var okResult = (OkObjectResult)result.Result;
+            var resultValue = (IEnumerable<Candidate>)okResult.Value;
+
+            _repo.Verify(r => r.GetCandidatesWithOutstandingAssessments(), Times.Once);
+        }
+
+        [TestMethod]
+        public void WillReturnAnEmptyArrayWhenNoCandidates()
+        {
+            _repo.Setup(r => r.GetCandidatesWithOutstandingAssessments()).Returns(new Candidate[0].AsEnumerable());
+
+            var result = _controller.GetCandidatesWithOutstandingAssessments();
+            var okResult = (OkObjectResult)result.Result;
+            var resultValue = (IEnumerable<Candidate>)okResult.Value;
+
+            _repo.Verify(r => r.GetCandidatesWithOutstandingAssessments(), Times.Once);
+            Assert.AreEqual(0, resultValue.Count());
+        }
+
         private static List<Candidate> CreateCandidates()
         {
             var candidates = new List<Candidate>();

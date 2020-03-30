@@ -6,6 +6,7 @@ namespace Thomas.TechTest.API
     public interface ICandidateRepository
     {
         IEnumerable<Models.Candidate> GetCandidates();
+        IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments();
         Models.Candidate GetCandidate(Guid id);
     }
 }

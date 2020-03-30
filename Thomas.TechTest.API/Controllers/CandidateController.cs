@@ -34,6 +34,15 @@ namespace Thomas.TechTest.API.Controllers
         }
 
         [HttpGet]
+        [Route("/all/uncompleted")]
+        [ProducesResponseType(typeof(NotFoundResult), 404)]
+        [ProducesResponseType(typeof(ActionResult<Candidate>), 200)]
+        public ActionResult<IEnumerable<Candidate>> GetCandidatesWithOutstandingAssessments()
+        {
+            return Ok(_repo.GetCandidatesWithOutstandingAssessments());
+        }
+
+        [HttpGet]
         public ActionResult<IEnumerable<Candidate>> Get()
         {
             return Ok(_repo.GetCandidates());
