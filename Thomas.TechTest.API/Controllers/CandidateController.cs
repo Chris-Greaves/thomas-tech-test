@@ -44,8 +44,8 @@ namespace Thomas.TechTest.API.Controllers
 
         [HttpPost]
         [Route("/search")]
-        [ProducesResponseType(typeof(ActionResult<IEnumerable<CandidateSummary>>), 200)]
-        public ActionResult<IEnumerable<CandidateSummary>> GetCandidatesWithFilterOptions(SearchFilterOptions options)
+        [ProducesResponseType(typeof(ActionResult<SearchResult>), 200)]
+        public ActionResult<SearchResult> GetCandidatesWithFilterOptions(SearchFilterOptions options)
         {
             return Ok(_repo.SearchForCandidates(options));
         }

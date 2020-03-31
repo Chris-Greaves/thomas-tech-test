@@ -72,7 +72,7 @@ namespace Thomas.TechTest.Tests
 
             foreach (var id in ids)
             {
-                Assert.IsTrue(result.Any(c => c.Id == id)); 
+                Assert.IsTrue(result.Any(c => c.Id == id));
             }
         }
 
@@ -100,7 +100,7 @@ namespace Thomas.TechTest.Tests
 
             var result = _repo.SearchForCandidates(options);
 
-            Assert.AreEqual(_context.Candidates.Count(), result.Count());
+            Assert.AreEqual(_context.Candidates.Count(), result.Results.Count());
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace Thomas.TechTest.Tests
 
             var result = _repo.SearchForCandidates(options);
 
-            Assert.AreEqual(randy.Id, result.First().Id);
+            Assert.AreEqual(randy.Id, result.Results.First().Id);
         }
 
         [TestMethod]
@@ -130,7 +130,7 @@ namespace Thomas.TechTest.Tests
 
             var result = _repo.SearchForCandidates(options);
 
-            Assert.AreEqual(randy.Id, result.First().Id);
+            Assert.AreEqual(randy.Id, result.Results.First().Id);
         }
 
         [TestMethod]
@@ -145,7 +145,7 @@ namespace Thomas.TechTest.Tests
 
             var result = _repo.SearchForCandidates(options);
 
-            Assert.AreEqual(randy.Id, result.First().Id);
+            Assert.AreEqual(randy.Id, result.Results.First().Id);
         }
 
         [TestMethod]
@@ -160,10 +160,53 @@ namespace Thomas.TechTest.Tests
 
             var result = _repo.SearchForCandidates(options);
 
-            Assert.AreEqual(ids.Count(), result.Count());
+            Assert.AreEqual(ids.Count(), result.Results.Count());
             foreach (var id in ids)
             {
-                Assert.IsTrue(result.Any(r=>r.Id == id)); 
+                Assert.IsTrue(result.Results.Any(r => r.Id == id));
+            }
+        }
+
+        [TestMethod]
+        public void CanSelectPageOfResultsUsingSearch()
+        {
+            var expectedTotal = _context.Candidates.Count();
+            var options = new SearchFilterOptions
+            {
+                Page = 2,
+                ResultsPerPage = 3
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.AreEqual(3, result.Results.Count());
+            Assert.AreEqual(expectedTotal, result.TotalRows);
+        }
+
+        [TestMethod]
+        public void NumberOfTotalPagesIsCorrect()
+        {
+            var expectedTotal = _context.Candidates.Count();
+            var options = new SearchFilterOptions
+            {
+                Page = 2,
+                ResultsPerPage = 3
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.AreEqual(3, result.Results.Count());
+            Assert.AreEqual(expectedTotal, result.TotalRows);
+
+            var totalPagesRoundDown = expectedTotal / 3;
+            var totalPagesRemainder = expectedTotal % 3;
+            if (totalPagesRemainder > 0)
+            {
+                Assert.AreEqual(totalPagesRoundDown + 1, result.TotalPages);
+            }
+            else
+            {
+                Assert.AreEqual(totalPagesRoundDown, result.TotalPages);
             }
         }
 

@@ -155,14 +155,14 @@ namespace Thomas.TechTest.Tests
             {
                 NameSearchString = ""
             };
-            _repo.Setup(r => r.SearchForCandidates(options)).Returns(candidates);
+            _repo.Setup(r => r.SearchForCandidates(options)).Returns(new SearchResult { Results = candidates });
 
             var result = _controller.GetCandidatesWithFilterOptions(options);
             var okResult = (OkObjectResult)result.Result;
-            var resultValue = (IEnumerable<CandidateSummary>)okResult.Value;
+            var resultValue = (SearchResult)okResult.Value;
 
             _repo.Verify(r => r.SearchForCandidates(options), Times.Once);
-            Assert.AreEqual(candidates.Count(), resultValue.Count());
+            Assert.AreEqual(candidates.Count(), resultValue.Results.Count());
         }
 
         [TestMethod]
@@ -172,14 +172,14 @@ namespace Thomas.TechTest.Tests
             {
                 NameSearchString = "Does not exist"
             };
-            _repo.Setup(r => r.SearchForCandidates(options)).Returns(new List<CandidateSummary>().AsEnumerable());
+            _repo.Setup(r => r.SearchForCandidates(options)).Returns(new SearchResult { Results = new List<CandidateSummary>().AsEnumerable() });
 
             var result = _controller.GetCandidatesWithFilterOptions(options);
             var okResult = (OkObjectResult)result.Result;
-            var resultValue = (IEnumerable<CandidateSummary>)okResult.Value;
+            var resultValue = (SearchResult)okResult.Value;
 
             _repo.Verify(r => r.SearchForCandidates(options), Times.Once);
-            Assert.AreEqual(0, resultValue.Count());
+            Assert.AreEqual(0, resultValue.Results.Count());
         }
 
         private static List<Candidate> CreateCandidates()

@@ -68,18 +68,31 @@ namespace Thomas.TechTest.API
         //        .Select(ConvertToModelSummary);
         //}
 
-        public IEnumerable<Models.CandidateSummary> SearchForCandidates(Models.SearchFilterOptions options)
+        public Models.SearchResult SearchForCandidates(Models.SearchFilterOptions options)
         {
+            var returnObj = new Models.SearchResult();
             var candidates = _context.Candidates.AsQueryable();
 
             if (!string.IsNullOrEmpty(options.NameSearchString))
             {
                 candidates = candidates.Where(
-                    c => c.Firstname.ToLower().Contains(options.NameSearchString.ToLower()) || 
+                    c => c.Firstname.ToLower().Contains(options.NameSearchString.ToLower()) ||
                     c.Lastname.ToLower().Contains(options.NameSearchString.ToLower()));
             }
 
-            return candidates.Select(ConvertToModelSummary);
+            returnObj.TotalRows = candidates.Count();
+
+            if (options.Page.HasValue && options.ResultsPerPage.HasValue)
+            {
+                returnObj.TotalPages = (returnObj.TotalRows + (options.ResultsPerPage.Value - 1)) / options.ResultsPerPage.Value; // Work out number of total pages using integer division
+
+                candidates = candidates
+                    .Skip((options.Page.Value - 1) * options.ResultsPerPage.Value)
+                    .Take(options.ResultsPerPage.Value);
+            }
+
+            returnObj.Results = candidates.Select(ConvertToModelSummary);
+            return returnObj;
         }
 
 
