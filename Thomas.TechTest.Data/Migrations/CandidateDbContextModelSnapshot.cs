@@ -16,11 +16,17 @@ namespace Thomas.TechTest.Data.Migrations
             modelBuilder
                 .HasAnnotation("ProductVersion", "3.1.2");
 
-            modelBuilder.Entity("Thomas.TechTest.Data.AptitudeAssessment", b =>
+            modelBuilder.Entity("Thomas.TechTest.Data.Assessment", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("AssessmentType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CompletedOn")
                         .HasColumnType("TEXT");
@@ -31,29 +37,14 @@ namespace Thomas.TechTest.Data.Migrations
                     b.Property<int?>("TrainabilityIndex")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("AptitudeAssessments");
-                });
-
-            modelBuilder.Entity("Thomas.TechTest.Data.BehaviourAssessment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("CompletedOn")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("SentOn")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("WorkingStrengths")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("BehaviourAssessments");
+                    b.HasIndex("CandidateId");
+
+                    b.ToTable("Assessments");
                 });
 
             modelBuilder.Entity("Thomas.TechTest.Data.Candidate", b =>
@@ -61,12 +52,6 @@ namespace Thomas.TechTest.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
-
-                    b.Property<long>("AptitudeAssessmentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("BehaviourAssessmentId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Firstname")
                         .HasColumnType("TEXT");
@@ -79,24 +64,14 @@ namespace Thomas.TechTest.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AptitudeAssessmentId");
-
-                    b.HasIndex("BehaviourAssessmentId");
-
                     b.ToTable("Candidates");
                 });
 
-            modelBuilder.Entity("Thomas.TechTest.Data.Candidate", b =>
+            modelBuilder.Entity("Thomas.TechTest.Data.Assessment", b =>
                 {
-                    b.HasOne("Thomas.TechTest.Data.AptitudeAssessment", "AptitudeAssessment")
-                        .WithMany()
-                        .HasForeignKey("AptitudeAssessmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Thomas.TechTest.Data.BehaviourAssessment", "BehaviourAssessment")
-                        .WithMany()
-                        .HasForeignKey("BehaviourAssessmentId")
+                    b.HasOne("Thomas.TechTest.Data.Candidate", "Candidate")
+                        .WithMany("Assessments")
+                        .HasForeignKey("CandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

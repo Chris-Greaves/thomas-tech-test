@@ -11,12 +11,6 @@ namespace Thomas.TechTest.Data
         public string Firstname { get; set; }
         public string Lastname { get; set; }
 
-        [ForeignKey("BehaviourAssessment")]
-        public long BehaviourAssessmentId { get; set; }
-        public BehaviourAssessment BehaviourAssessment { get; set; }
-
-        [ForeignKey("AptitudeAssessment")]
-        public long AptitudeAssessmentId { get; set; }
-        public AptitudeAssessment AptitudeAssessment { get; set; }
+        public virtual ICollection<Assessment> Assessments { get; set; }
     }
 }
