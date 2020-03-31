@@ -131,6 +131,7 @@ namespace Thomas.TechTest.Tests
             var resultValue = (IEnumerable<Candidate>)okResult.Value;
 
             _repo.Verify(r => r.GetCandidatesWithOutstandingAssessments(), Times.Once);
+            Assert.AreEqual(2, resultValue.Count());
         }
 
         [TestMethod]
@@ -143,6 +144,41 @@ namespace Thomas.TechTest.Tests
             var resultValue = (IEnumerable<Candidate>)okResult.Value;
 
             _repo.Verify(r => r.GetCandidatesWithOutstandingAssessments(), Times.Once);
+            Assert.AreEqual(0, resultValue.Count());
+        }
+
+        [TestMethod]
+        public void CanRetrieveAllCandidatesUsingSearch()
+        {
+            var candidates = CreateCandidateSummaries();
+            var options = new SearchFilterOptions
+            {
+                NameSearchString = ""
+            };
+            _repo.Setup(r => r.SearchForCandidates(options)).Returns(candidates);
+
+            var result = _controller.GetCandidatesWithFilterOptions(options);
+            var okResult = (OkObjectResult)result.Result;
+            var resultValue = (IEnumerable<CandidateSummary>)okResult.Value;
+
+            _repo.Verify(r => r.SearchForCandidates(options), Times.Once);
+            Assert.AreEqual(candidates.Count(), resultValue.Count());
+        }
+
+        [TestMethod]
+        public void WillReturnAnEmptyArrayInsteadOf404WhenNoCandidatesMatchStringSearch()
+        {
+            var options = new SearchFilterOptions
+            {
+                NameSearchString = "Does not exist"
+            };
+            _repo.Setup(r => r.SearchForCandidates(options)).Returns(new List<CandidateSummary>().AsEnumerable());
+
+            var result = _controller.GetCandidatesWithFilterOptions(options);
+            var okResult = (OkObjectResult)result.Result;
+            var resultValue = (IEnumerable<CandidateSummary>)okResult.Value;
+
+            _repo.Verify(r => r.SearchForCandidates(options), Times.Once);
             Assert.AreEqual(0, resultValue.Count());
         }
 
@@ -205,6 +241,33 @@ namespace Thomas.TechTest.Tests
                     CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(3)),
                     WorkingStrengths = "WS"
                 }
+            });
+            return candidates;
+        }
+
+        private static List<CandidateSummary> CreateCandidateSummaries()
+        {
+            var candidates = new List<CandidateSummary>();
+            candidates.Add(new CandidateSummary
+            {
+                Id = Guid.NewGuid(),
+                RoleId = Guid.NewGuid(),
+                Firstname = "Someone",
+                Lastname = "Cool"
+            });
+            candidates.Add(new CandidateSummary
+            {
+                Id = Guid.NewGuid(),
+                RoleId = Guid.NewGuid(),
+                Firstname = "Someone",
+                Lastname = "Else"
+            });
+            candidates.Add(new CandidateSummary
+            {
+                Id = Guid.NewGuid(),
+                RoleId = Guid.NewGuid(),
+                Firstname = "Random",
+                Lastname = "Guy"
             });
             return candidates;
         }
