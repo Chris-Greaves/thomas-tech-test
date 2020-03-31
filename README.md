@@ -2,16 +2,12 @@
 
 ## API
 
-### Candidate Endpoints
+The API is documented using Swagger, meaning you can see all the available endpoints by going to the root of the application. Swagger gives you both the ability to see the objects sent and received from the API, as well as allow you to call the endpoints right from the browser. This makes it easier for developers to view APIs and also gives them the ability to play around with it before attempting to integrate.
 
-- Get Candidate by Id: Used to get a single candidate and their details including current status of assessments
-- Get All Candidates: Gets all the candidates and their basic details
-- Get All Candidates (with Pagination): Same as before but with the ability to set from and count
-- Get All Candidates By Assessment: Gets all the Candidates that have been sent the specified assessment
-- Candidate Search: Takes a string to compare against Candidate Names
+## Prometheus
 
-GET /api/candidate/{id}
-GET /api/candidate/all
-GET /api/candidate/all/Assessment/{assessment}
-GET /api/candidate/all/search/{searchString}
-POST /api/candidate/all/page { from:int, num:int }
+The API also comes with Prometheus metrics to provide an insight to how the application is performing, and allow for performance to be monitored and graphed. You can see these metrics by going to `<root of application>/metrics` although, the formate it more designed to be digested by a Prometheus server.
+
+## Database
+
+The database provider is SQLite as it was the most convenient to setup, and could be used anywhere as its a binary file. The Repo comes with one already and it contains test data to get you started. However, if you do want to create a new database, it was built code first using migrations. This means you can run `dotnet ef database update` to create a new database (providing it doesn't already exist, so make sure you delete the old one first before trying this).
