@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Thomas.TechTest.Data;
 
@@ -30,28 +31,30 @@ namespace Thomas.TechTest.API
 
             for (int i = 0; i < testData.Length; i++)
             {
-                context.Candidates.Add(new Candidate
+                var candidate = context.Candidates.Add(new Candidate
                 {
                     Id = testData[i].Id,
                     RoleId = testData[i].RoleId,
                     Firstname = testData[i].Firstname,
                     Lastname = testData[i].Lastname,
-                    BehaviourAssessmentId = i + 1,
-                    BehaviourAssessment = new BehaviourAssessment
-                    {
-                        Id = i + 1,
-                        SentOn = testData[i].BehaviourAssessment.SentOn,
-                        CompletedOn = testData[i].BehaviourAssessment.CompletedOn,
-                        WorkingStrengths = testData[i].BehaviourAssessment.WorkingStrengths
-                    },
-                    AptitudeAssessmentId = i + 1,
-                    AptitudeAssessment = new AptitudeAssessment
-                    {
-                        Id = i + 1,
-                        SentOn = testData[i].BehaviourAssessment.SentOn,
-                        CompletedOn = testData[i].AptitudeAssessment.CompletedOn,
-                        TrainabilityIndex = testData[i].AptitudeAssessment.TrainabilityIndex
-                    }
+                });
+
+                context.Assessments.Add(new Assessment
+                {
+                    AssessmentType = AssessmentType.Behaviour,
+                    SentOn = testData[i].BehaviourAssessment.SentOn,
+                    CompletedOn = testData[i].BehaviourAssessment.CompletedOn,
+                    WorkingStrengths = testData[i].BehaviourAssessment.WorkingStrengths,
+                    Candidate = candidate.Entity
+                });
+
+                context.Assessments.Add(new Assessment
+                {
+                    AssessmentType = AssessmentType.Aptitude,
+                    SentOn = testData[i].AptitudeAssessment.SentOn,
+                    CompletedOn = testData[i].AptitudeAssessment.CompletedOn,
+                    TrainabilityIndex = testData[i].AptitudeAssessment.TrainabilityIndex,
+                    Candidate = candidate.Entity
                 });
             }
             context.SaveChanges();

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Thomas.TechTest.API.Models;
 using Thomas.TechTest.Data;
 
 namespace Thomas.TechTest.API
@@ -18,8 +19,7 @@ namespace Thomas.TechTest.API
         public Models.Candidate GetCandidate(Guid id)
         {
             var dbCandidate = _context.Candidates
-                .Include(c => c.AptitudeAssessment)
-                .Include(c => c.BehaviourAssessment)
+                .Include(c => c.Assessments)
                 .SingleOrDefault(c => c.Id == id);
             if (dbCandidate == null)
             {
@@ -31,17 +31,15 @@ namespace Thomas.TechTest.API
         public IEnumerable<Models.Candidate> GetCandidates()
         {
             return _context.Candidates
-                .Include(c => c.AptitudeAssessment)
-                .Include(c => c.BehaviourAssessment)
+                .Include(c => c.Assessments)
                 .Select(ConvertToModel);
         }
 
         public IEnumerable<Models.Candidate> GetCandidatesWithOutstandingAssessments()
         {
             return _context.Candidates
-                .Include(c => c.AptitudeAssessment)
-                .Include(c => c.BehaviourAssessment)
-                .Where(c => c.BehaviourAssessment.CompletedOn == null || c.AptitudeAssessment.CompletedOn == null)
+                .Include(c => c.Assessments)
+                .Where(c => c.Assessments.Any(a => a.CompletedOn == null))
                 .Select(ConvertToModel);
         }
 
@@ -104,8 +102,8 @@ namespace Thomas.TechTest.API
                 RoleId = c.RoleId,
                 Firstname = c.Firstname,
                 Lastname = c.Lastname,
-                AptitudeAssessment = ConvertToModel(c.AptitudeAssessment),
-                BehaviourAssessment = ConvertToModel(c.BehaviourAssessment),
+                AptitudeAssessment = GetlatestAptitudeAssessment(c.Assessments),
+                BehaviourAssessment = GetlatestBehaviourAssessment(c.Assessments),
             };
         }
 
@@ -120,33 +118,35 @@ namespace Thomas.TechTest.API
             };
         }
 
-        private static Models.AptitudeAssessment ConvertToModel(Data.AptitudeAssessment ass)
+        private static AptitudeAssessment GetlatestAptitudeAssessment(ICollection<Data.Assessment> assessments)
         {
-            if (ass == null)
+            var latestAptAssessment = assessments.OrderBy(a => a.SentOn).FirstOrDefault(a => a.AssessmentType == AssessmentType.Aptitude);
+            if (latestAptAssessment == null)
             {
                 return null;
             }
 
-            return new Models.AptitudeAssessment
+            return new AptitudeAssessment
             {
-                SentOn = ass.SentOn,
-                CompletedOn = ass.CompletedOn,
-                TrainabilityIndex = ass.TrainabilityIndex
+                SentOn = latestAptAssessment.SentOn,
+                CompletedOn = latestAptAssessment.CompletedOn,
+                TrainabilityIndex = latestAptAssessment.TrainabilityIndex,
             };
         }
 
-        private static Models.BehaviourAssessment ConvertToModel(Data.BehaviourAssessment ass)
+        private static BehaviourAssessment GetlatestBehaviourAssessment(ICollection<Data.Assessment> assessments)
         {
-            if (ass == null)
+            var latestBehAssessment = assessments.OrderBy(a => a.SentOn).First(a => a.AssessmentType == AssessmentType.Behaviour);
+            if (latestBehAssessment == null)
             {
                 return null;
             }
 
-            return new Models.BehaviourAssessment
+            return new BehaviourAssessment
             {
-                SentOn = ass.SentOn,
-                CompletedOn = ass.CompletedOn,
-                WorkingStrengths = ass.WorkingStrengths
+                SentOn = latestBehAssessment.SentOn,
+                CompletedOn = latestBehAssessment.CompletedOn,
+                WorkingStrengths = latestBehAssessment.WorkingStrengths,
             };
         }
     }
