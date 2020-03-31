@@ -78,6 +78,19 @@ namespace Thomas.TechTest.API
                     c.Lastname.ToLower().Contains(options.NameSearchString.ToLower()));
             }
 
+            if (options.AssessmentsToFilterFor != null && options.AssessmentsToFilterFor.Count() > 0)
+            {
+                if (options.AssessmentsToFilterFor.Contains("Aptitude"))
+                {
+                    candidates = candidates.Where(c => c.Assessments.Any(a => a.AssessmentType == AssessmentType.Aptitude));
+                }
+
+                if (options.AssessmentsToFilterFor.Contains("Behaviour"))
+                {
+                    candidates = candidates.Where(c => c.Assessments.Any(a => a.AssessmentType == AssessmentType.Behaviour));
+                }
+            }
+
             returnObj.TotalRows = candidates.Count();
 
             if (options.Page.HasValue && options.ResultsPerPage.HasValue)
@@ -136,7 +149,7 @@ namespace Thomas.TechTest.API
 
         private static BehaviourAssessment GetlatestBehaviourAssessment(ICollection<Data.Assessment> assessments)
         {
-            var latestBehAssessment = assessments.OrderBy(a => a.SentOn).First(a => a.AssessmentType == AssessmentType.Behaviour);
+            var latestBehAssessment = assessments.OrderBy(a => a.SentOn).FirstOrDefault(a => a.AssessmentType == AssessmentType.Behaviour);
             if (latestBehAssessment == null)
             {
                 return null;

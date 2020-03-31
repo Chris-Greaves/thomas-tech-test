@@ -37,9 +37,10 @@ namespace Thomas.TechTest.Tests
         public void CanRetrieveACandidateById()
         {
             var dbCandidate = _context.Candidates
-                .Include(c => c.AptitudeAssessment)
-                .Include(c => c.BehaviourAssessment)
+                .Include(c => c.Assessments)
                 .First();
+            var aptitudeAssessment = dbCandidate.Assessments.First(a => a.AssessmentType == AssessmentType.Aptitude);
+            var behaviourAssessment = dbCandidate.Assessments.First(a => a.AssessmentType == AssessmentType.Behaviour);
 
             var result = _repo.GetCandidate(dbCandidate.Id);
 
@@ -47,12 +48,12 @@ namespace Thomas.TechTest.Tests
             Assert.AreEqual(dbCandidate.Firstname, result.Firstname);
             Assert.AreEqual(dbCandidate.Lastname, result.Lastname);
             Assert.AreEqual(dbCandidate.RoleId, result.RoleId);
-            Assert.AreEqual(dbCandidate.AptitudeAssessment.SentOn, result.AptitudeAssessment.SentOn);
-            Assert.AreEqual(dbCandidate.AptitudeAssessment.CompletedOn, result.AptitudeAssessment.CompletedOn);
-            Assert.AreEqual(dbCandidate.AptitudeAssessment.TrainabilityIndex, result.AptitudeAssessment.TrainabilityIndex);
-            Assert.AreEqual(dbCandidate.BehaviourAssessment.SentOn, result.BehaviourAssessment.SentOn);
-            Assert.AreEqual(dbCandidate.BehaviourAssessment.CompletedOn, result.BehaviourAssessment.CompletedOn);
-            Assert.AreEqual(dbCandidate.BehaviourAssessment.WorkingStrengths, result.BehaviourAssessment.WorkingStrengths);
+            Assert.AreEqual(aptitudeAssessment.SentOn, result.AptitudeAssessment.SentOn);
+            Assert.AreEqual(aptitudeAssessment.CompletedOn, result.AptitudeAssessment.CompletedOn);
+            Assert.AreEqual(aptitudeAssessment.TrainabilityIndex, result.AptitudeAssessment.TrainabilityIndex);
+            Assert.AreEqual(behaviourAssessment.SentOn, result.BehaviourAssessment.SentOn);
+            Assert.AreEqual(behaviourAssessment.CompletedOn, result.BehaviourAssessment.CompletedOn);
+            Assert.AreEqual(behaviourAssessment.WorkingStrengths, result.BehaviourAssessment.WorkingStrengths);
         }
 
         [TestMethod]
@@ -79,7 +80,7 @@ namespace Thomas.TechTest.Tests
         [TestMethod]
         public void CanReceiveAllCandidatesWithOutstandingAssessmentsOnly()
         {
-            var ids = _context.Candidates.Where(c => c.AptitudeAssessment.CompletedOn == null || c.BehaviourAssessment.CompletedOn == null).Select(c => c.Id);
+            var ids = _context.Candidates.Where(c => c.Assessments.Any(a => a.CompletedOn == null)).Select(c => c.Id);
 
             var result = _repo.GetCandidatesWithOutstandingAssessments();
 
@@ -210,123 +211,248 @@ namespace Thomas.TechTest.Tests
             }
         }
 
+        [TestMethod]
+        public void CanFilterForCandidatesWithSentAptitudeTests()
+        {
+            var candidateWithAptitudeAssessment = _context.Candidates.First(c => c.Assessments.Any(a => a.AssessmentType == AssessmentType.Aptitude));
+            var options = new SearchFilterOptions
+            {
+                AssessmentsToFilterFor = new string[]
+                {
+                    "Aptitude"
+                }
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.IsTrue(result.Results.Any(r => r.Id == candidateWithAptitudeAssessment.Id));
+        }
+
+        [TestMethod]
+        public void CanFilterForCandidatesWithSentBehaviourTests()
+        {
+            var candidateWithBehaviourAssessment = _context.Candidates.First(c => c.Assessments.Any(a => a.AssessmentType == AssessmentType.Behaviour));
+            var options = new SearchFilterOptions
+            {
+                AssessmentsToFilterFor = new string[]
+                {
+                    "Behaviour"
+                }
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.IsTrue(result.Results.Any(r => r.Id == candidateWithBehaviourAssessment.Id));
+        }
+
+        [TestMethod]
+        public void CandidateWithoutAptitudeDoesNotAppearWhenFilteredForAptitude()
+        {
+            var candidateWithoutBehaviourAssessment = _context.Candidates.First(c => !c.Assessments.Any(a => a.AssessmentType == AssessmentType.Aptitude));
+            var options = new SearchFilterOptions
+            {
+                AssessmentsToFilterFor = new string[]
+                {
+                    "Aptitude"
+                }
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.IsTrue(!result.Results.Any(r => r.Id == candidateWithoutBehaviourAssessment.Id));
+        }
+
+        [TestMethod]
+        public void CandidateWithoutBehaviourDoesNotAppearWhenFilteredForBehaviour()
+        {
+            var candidateWithoutBehaviourAssessment = _context.Candidates.First(c => !c.Assessments.Any(a => a.AssessmentType == AssessmentType.Behaviour));
+            var options = new SearchFilterOptions
+            {
+                AssessmentsToFilterFor = new string[]
+                {
+                    "Behaviour"
+                }
+            };
+
+            var result = _repo.SearchForCandidates(options);
+
+            Assert.IsTrue(!result.Results.Any(r => r.Id == candidateWithoutBehaviourAssessment.Id));
+        }
+
         private void EnsureTestDataExists()
         {
             _context.Database.EnsureCreated();
 
             // Model Candidate
-            _context.Candidates.Add(new Data.Candidate
+            var candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "Someone",
-                Lastname = "Cool",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(8)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
-                    WorkingStrengths = "WS"
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(8)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(7)),
-                    TrainabilityIndex = 54
-                }
+                Lastname = "Cool"
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(8)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "WS",
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(8)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(7)),
+                TrainabilityIndex = 54,
+                Candidate = candidate.Entity
             });
 
             // Candidate with outstanding Behaviour Assessment
-            _context.Candidates.Add(new Data.Candidate
+            candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "ajsdnfksa",
-                Lastname = "dlfjsdlkf",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(16)),
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(14)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(11)),
-                    TrainabilityIndex = 54
-                }
+                Lastname = "dlfjsdlkf"
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(16)),
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(14)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(11)),
+                TrainabilityIndex = 54,
+                Candidate = candidate.Entity
             });
 
             // Candidate with outstanding Aptitude Assessment
-            _context.Candidates.Add(new Data.Candidate
+            candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "sdfljsodifjs",
                 Lastname = "dsflksdlkfks",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
-                    WorkingStrengths = "S"
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                }
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "S",
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                Candidate = candidate.Entity
             });
 
             // Candidate with Specific Name to be found be Search functionality
-            _context.Candidates.Add(new Data.Candidate
+            candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "Randy",
-                Lastname = "Dillion",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
-                    WorkingStrengths = "S"
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
-                    TrainabilityIndex = 34
-                }
+                Lastname = "Dillion"
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "S",
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
+                TrainabilityIndex = 34,
+                Candidate = candidate.Entity
             });
 
             // Candidates with generic Names to be found be Search functionality
-            _context.Candidates.Add(new Data.Candidate
+            candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "Chris",
-                Lastname = "Awesome",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
-                    WorkingStrengths = "S"
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
-                    TrainabilityIndex = 34
-                }
+                Lastname = "Awesome"
             });
-            _context.Candidates.Add(new Data.Candidate
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "S",
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
+                TrainabilityIndex = 34,
+                Candidate = candidate.Entity
+            });
+            candidate = _context.Candidates.Add(new Data.Candidate
             {
                 RoleId = Guid.NewGuid(),
                 Firstname = "Christ",
-                Lastname = "The one",
-                BehaviourAssessment = new Data.BehaviourAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
-                    WorkingStrengths = "S"
-                },
-                AptitudeAssessment = new Data.AptitudeAssessment
-                {
-                    SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                    CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
-                    TrainabilityIndex = 34
-                }
+                Lastname = "The one"
             });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "S",
+                Candidate = candidate.Entity
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(9)),
+                TrainabilityIndex = 34,
+                Candidate = candidate.Entity
+            });
+
+            // Candidate with No Aptitude Assessment
+            candidate = _context.Candidates.Add(new Data.Candidate
+            {
+                RoleId = Guid.NewGuid(),
+                Firstname = "No",
+                Lastname = "Personality"
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Behaviour,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                WorkingStrengths = "S",
+                Candidate = candidate.Entity
+            });
+
+            // Candidate with No Behaviour Assessment
+            candidate = _context.Candidates.Add(new Data.Candidate
+            {
+                RoleId = Guid.NewGuid(),
+                Firstname = "Bad",
+                Lastname = "Behaviour"
+            });
+            _context.Assessments.Add(new Data.Assessment
+            {
+                AssessmentType = AssessmentType.Aptitude,
+                SentOn = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                CompletedOn = DateTime.Now.Subtract(TimeSpan.FromDays(6)),
+                TrainabilityIndex = 65,
+                Candidate = candidate.Entity
+            });
+
             _context.SaveChanges();
         }
     }
