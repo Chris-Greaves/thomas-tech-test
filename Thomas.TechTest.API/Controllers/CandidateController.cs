@@ -35,7 +35,7 @@ namespace Thomas.TechTest.API.Controllers
         }
 
         [HttpGet]
-        [Route("/all/uncompleted")]
+        [Route("all/uncompleted")]
         [ProducesResponseType(typeof(ActionResult<Candidate>), 200)]
         public ActionResult<IEnumerable<Candidate>> GetCandidatesWithOutstandingAssessments()
         {
@@ -43,7 +43,7 @@ namespace Thomas.TechTest.API.Controllers
         }
 
         [HttpPost]
-        [Route("/search")]
+        [Route("search")]
         [ProducesResponseType(typeof(ActionResult<SearchResult>), 200)]
         public ActionResult<SearchResult> GetCandidatesWithFilterOptions(SearchFilterOptions options)
         {
