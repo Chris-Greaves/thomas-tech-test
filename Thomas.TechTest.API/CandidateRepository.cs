@@ -40,6 +40,7 @@ namespace Thomas.TechTest.API
             return _context.Candidates
                 .Include(c => c.Assessments)
                 .Where(c => c.Assessments.Any(a => a.CompletedOn == null))
+                .OrderBy(c => c.Firstname).ThenBy(c => c.Lastname)
                 .Select(ConvertToModel);
         }
 
@@ -102,7 +103,10 @@ namespace Thomas.TechTest.API
                     .Take(options.ResultsPerPage.Value);
             }
 
-            returnObj.Results = candidates.Select(ConvertToModelSummary);
+            returnObj.Results = candidates
+                .OrderBy(c => c.Firstname)
+                .ThenBy(c => c.Lastname)
+                .Select(ConvertToModelSummary);
             return returnObj;
         }
 

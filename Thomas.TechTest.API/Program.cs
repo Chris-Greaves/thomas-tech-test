@@ -65,6 +65,7 @@ namespace Thomas.TechTest.API
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("http://*:5001");
                 });
     }
     public class DateTimeConverter : JsonConverter<DateTime>

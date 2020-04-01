@@ -20,5 +20,11 @@
     <ProjectReference Include="..\Thomas.TechTest.Data\Thomas.TechTest.Data.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="candidate.db">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>
